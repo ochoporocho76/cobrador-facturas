@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cuentas por Cobrar</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<meta name="theme-color" content="#16794f">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1a1d23;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent: #16794f;
+    --accent-ink: #ffffff;
+    --warn: #b45309;
+    --warn-bg: #fef3c7;
+    --danger: #b91c1c;
+    --danger-bg: #fee2e2;
+    --ok-bg: #dcfce7;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16181d; --card: #202329; --text: #f2f3f5; --muted: #9aa0aa;
+      --border: #333740; --accent: #2fa374; --accent-ink: #05130c;
+      --warn: #fbbf24; --warn-bg: #3a2f0f; --danger: #f87171; --danger-bg: #3a1414; --ok-bg: #133024;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #16181d; --card: #202329; --text: #f2f3f5; --muted: #9aa0aa;
+    --border: #333740; --accent: #2fa374; --accent-ink: #05130c;
+    --warn: #fbbf24; --warn-bg: #3a2f0f; --danger: #f87171; --danger-bg: #3a1414; --ok-bg: #133024;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100%;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px 16px 40px; }
+  .headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  h1 { font-size: 1.25rem; margin: 8px 0 4px; }
+  .sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+  .lang-toggle { display: flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; flex-shrink: 0; margin-top: 8px; }
+  .lang-toggle button { padding: 5px 10px; font-size: 0.72rem; font-weight: 600; background: var(--card); color: var(--muted); }
+  .lang-toggle button.active { background: var(--accent); color: var(--accent-ink); }
+  .stats { display: flex; gap: 10px; margin-bottom: 18px; }
+  .stat { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
+  .stat b { display: block; font-size: 1.2rem; }
+  .stat span { font-size: 0.72rem; color: var(--muted); }
+  form { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 18px; }
+  form h2 { font-size: 0.95rem; margin: 0 0 10px; }
+  .row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 120px; }
+  label { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 3px; }
+  input {
+    width: 100%; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 0.9rem;
+  }
+  button { cursor: pointer; border: none; font-size: 0.9rem; }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); padding: 10px 16px; border-radius: 8px; font-weight: 600; width: 100%; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card-top strong { font-size: 0.95rem; }
+  .amount { font-size: 1rem; font-weight: 700; white-space: nowrap; }
+  .meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .badge { display: inline-block; font-size: 0.68rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-top: 6px; }
+  .b-ok { background: var(--ok-bg); color: var(--accent); }
+  .b-warn { background: var(--warn-bg); color: var(--warn); }
+  .b-danger { background: var(--danger-bg); color: var(--danger); }
+  .actions { display: flex; gap: 8px; margin-top: 10px; }
+  .actions button, .actions a { flex: 1; padding: 8px; border-radius: 8px; font-size: 0.8rem; }
+  .btn-wa { background: #25D366; color: #05130c; font-weight: 600; }
+  .btn-del { background: transparent; border: 1px solid var(--border) !important; color: var(--muted); }
+  .empty { text-align: center; color: var(--muted); padding: 30px 10px; font-size: 0.85rem; }
+  .backup-btn { border: 1px solid var(--border); border-radius: 8px; padding: 9px; flex: 1; text-align: center; display: block; cursor: pointer; background: transparent; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="headrow">
+    <div>
+      <h1 id="tTitle">💰 Cuentas por Cobrar</h1>
+      <div class="sub" id="tSub">Cargá tus clientes con saldo pendiente y mandales el recordatorio por WhatsApp con un toque.</div>
+    </div>
+    <div class="lang-toggle">
+      <button type="button" id="btnEs" onclick="setLang('es')">ES</button>
+      <button type="button" id="btnEn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="statTotal">$0</b><span id="tStatTotal">Total adeudado</span></div>
+    <div class="stat"><b id="statVencidos">0</b><span id="tStatVencidos">Vencidos</span></div>
+    <div class="stat"><b id="statClientes">0</b><span id="tStatClientes">Clientes</span></div>
+  </div>
+
+  <div id="planBanner" class="card" style="display:flex;align-items:center;justify-content:space-between;gap:10px"></div>
+
+  <div class="row" style="margin-bottom:18px">
+    <button type="button" class="backup-btn" id="btnExport" onclick="exportBackup()"></button>
+    <label class="backup-btn" id="btnImportLabel">
+      <input type="file" accept="application/json" onchange="importBackup(event)" style="display:none">
+    </label>
+  </div>
+
+  <form id="form">
+    <h2 id="tFormTitle">Nuevo cliente / saldo</h2>
+    <div class="row">
+      <div><label id="lNombre">Nombre</label><input id="nombre" required></div>
+      <div><label id="lTelefono">WhatsApp (549 + característica + número, sin 0 ni 15)</label><input id="telefono" required placeholder="5493411234567"></div>
+    </div>
+    <div class="row">
+      <div><label id="lMonto">Monto adeudado ($)</label><input id="monto" type="number" min="0" step="0.01" required placeholder="15000"></div>
+      <div><label id="lVencimiento">Vencimiento</label><input id="vencimiento" type="date" required></div>
+    </div>
+    <button type="submit" class="btn-primary" id="btnAgregar">Agregar</button>
+  </form>
+
+  <div id="lista"></div>
+</div>
+
+<script>
+const STORAGE_KEY = "cobrador_clientes_v1";
+const PREMIUM_KEY = "cobrador_premium_v1";
+const LANG_KEY = "cobrador_lang_v1";
+const FREE_LIMIT = 5;
+let clientes = [];
+let lang = localStorage.getItem(LANG_KEY) || "es";
+
+const T = {
+  es: {
+    title: "💰 Cuentas por Cobrar",
+    sub: "Cargá tus clientes con saldo pendiente y mandales el recordatorio por WhatsApp con un toque.",
+    statTotal: "Total adeudado", statVencidos: "Vencidos", statClientes: "Clientes",
+    exportBtn: "⬇️ Exportar backup", importBtn: "⬆️ Importar backup",
+    formTitle: "Nuevo cliente / saldo",
+    lNombre: "Nombre", lTelefono: "WhatsApp (549 + característica + número, sin 0 ni 15)",
+    lMonto: "Monto adeudado ($)", lVencimiento: "Vencimiento",
+    agregar: "Agregar", eliminar: "Eliminar", recordar: "📲 Recordar por WhatsApp",
+    empty: "Todavía no cargaste ningún cliente.",
+    venceHoy: "Vence hoy", venceEn: (d) => `Vence en ${d}d`, vencidoHace: (d) => `Vencido hace ${d}d`,
+    vence: "Vence", whatsapp: "WhatsApp",
+    planFree: (u) => `Plan gratis: ${u}/${FREE_LIMIT} clientes usados`,
+    planPremium: "⭐ Plan Premium — clientes ilimitados",
+    pasarPremium: "Pasar a Premium",
+    premiumAlert: "Premium: US$2,99/mes o US$19,99/año — clientes ilimitados.\n\nEl cobro real se activa cuando empaquetemos la app para Android con Google Play Billing. Por ahora esto es una vista previa del flujo.",
+    limiteAlert: `Llegaste al límite de ${FREE_LIMIT} clientes del plan gratis. Pasá a Premium para cargar clientes ilimitados.`,
+    backupNoDisp: "El backup no está disponible en este momento. Probá desde la app de Claude.",
+    backupError: "No se pudo guardar el backup.",
+    backupOk: (n) => "Backup importado. Clientes nuevos agregados: " + n,
+    backupFormatoError: "El archivo no tiene el formato esperado.",
+    locale: "es-AR",
+    waMsgVencido: (nombre, monto, venc) => `Hola ${nombre}! Te escribo para recordarte que tenés un saldo pendiente de ${monto}, con vencimiento el ${venc}. ¿Podemos coordinar el pago? Gracias!`,
+    waMsgProximo: (nombre, monto, venc) => `Hola ${nombre}! Te recuerdo que tenés un saldo de ${monto} con vencimiento el ${venc}. Cualquier consulta, avisame. Gracias!`
+  },
+  en: {
+    title: "💰 Accounts Receivable",
+    sub: "Add your clients with pending balances and send them a WhatsApp reminder with one tap.",
+    statTotal: "Total owed", statVencidos: "Overdue", statClientes: "Clients",
+    exportBtn: "⬇️ Export backup", importBtn: "⬆️ Import backup",
+    formTitle: "New client / balance",
+    lNombre: "Name", lTelefono: "WhatsApp (country code + area code + number, no leading 0)",
+    lMonto: "Amount owed ($)", lVencimiento: "Due date",
+    agregar: "Add", eliminar: "Delete", recordar: "📲 Remind via WhatsApp",
+    empty: "You haven't added any clients yet.",
+    venceHoy: "Due today", venceEn: (d) => `Due in ${d}d`, vencidoHace: (d) => `Overdue ${d}d`,
+    vence: "Due", whatsapp: "WhatsApp",
+    planFree: (u) => `Free plan: ${u}/${FREE_LIMIT} clients used`,
+    planPremium: "⭐ Premium plan — unlimited clients",
+    pasarPremium: "Go Premium",
+    premiumAlert: "Premium: $2.99/month or $19.99/year — unlimited clients.\n\nReal billing gets connected once we package the app for Android with Google Play Billing. This is just a preview of the flow for now.",
+    limiteAlert: `You reached the ${FREE_LIMIT}-client limit on the free plan. Go Premium to add unlimited clients.`,
+    backupNoDisp: "Backup isn't available right now. Try from the Claude app.",
+    backupError: "Couldn't save the backup.",
+    backupOk: (n) => "Backup imported. New clients added: " + n,
+    backupFormatoError: "That file isn't in the expected format.",
+    locale: "en-US",
+    waMsgVencido: (nombre, monto, venc) => `Hi ${nombre}! Just a reminder that you have a pending balance of ${monto}, due on ${venc}. Can we arrange payment? Thanks!`,
+    waMsgProximo: (nombre, monto, venc) => `Hi ${nombre}! Reminder that you have a balance of ${monto} due on ${venc}. Let me know if you have any questions. Thanks!`
+  }
+};
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem(LANG_KEY, l);
+  applyStaticText();
+  render();
+}
+function applyStaticText() {
+  const t = T[lang];
+  document.getElementById("tTitle").textContent = t.title;
+  document.getElementById("tSub").textContent = t.sub;
+  document.getElementById("tStatTotal").textContent = t.statTotal;
+  document.getElementById("tStatVencidos").textContent = t.statVencidos;
+  document.getElementById("tStatClientes").textContent = t.statClientes;
+  document.getElementById("btnExport").textContent = t.exportBtn;
+  document.getElementById("btnImportLabel").innerHTML = t.importBtn + '<input type="file" accept="application/json" onchange="importBackup(event)" style="display:none">';
+  document.getElementById("tFormTitle").textContent = t.formTitle;
+  document.getElementById("lNombre").textContent = t.lNombre;
+  document.getElementById("lTelefono").textContent = t.lTelefono;
+  document.getElementById("lMonto").textContent = t.lMonto;
+  document.getElementById("lVencimiento").textContent = t.lVencimiento;
+  document.getElementById("btnAgregar").textContent = t.agregar;
+  document.getElementById("nombre").placeholder = lang === "es" ? "Juan Pérez" : "John Smith";
+  document.getElementById("btnEs").className = lang === "es" ? "active" : "";
+  document.getElementById("btnEn").className = lang === "en" ? "active" : "";
+  document.documentElement.lang = lang;
+}
+
+function esPremium() {
+  return localStorage.getItem(PREMIUM_KEY) === "1";
+}
+function renderBanner() {
+  const t = T[lang];
+  const banner = document.getElementById("planBanner");
+  if (esPremium()) {
+    banner.innerHTML = `<span>${t.planPremium}</span>`;
+    banner.style.borderColor = "var(--accent)";
+  } else {
+    const usados = clientes.length;
+    banner.innerHTML = `<span>${t.planFree(usados)}</span>
+      <button type="button" class="btn-primary" style="width:auto;padding:8px 12px" onclick="pasarAPremium()">${t.pasarPremium}</button>`;
+    banner.style.borderColor = "var(--border)";
+  }
+}
+function pasarAPremium() {
+  alert(T[lang].premiumAlert);
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    clientes = raw ? JSON.parse(raw) : [];
+  } catch (e) { clientes = []; }
+}
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(clientes)); } catch (e) {}
+}
+function fmt(n) {
+  return "$" + Number(n).toLocaleString(T[lang].locale, { maximumFractionDigits: 0 });
+}
+function diasHasta(fechaStr) {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const f = new Date(fechaStr + "T00:00:00");
+  return Math.round((f - hoy) / 86400000);
+}
+function estado(dias) {
+  const t = T[lang];
+  if (dias < 0) return { label: t.vencidoHace(Math.abs(dias)), cls: "b-danger" };
+  if (dias <= 3) return { label: dias === 0 ? t.venceHoy : t.venceEn(dias), cls: "b-warn" };
+  return { label: t.venceEn(dias), cls: "b-ok" };
+}
+function toWaNumber(raw) {
+  let n = raw.replace(/\D/g, "");
+  n = n.replace(/^0+/, "");
+  if (!n.startsWith("54")) n = "54" + n;
+  if (!n.startsWith("549")) n = "549" + n.slice(2);
+  return n;
+}
+function mensajeWA(c) {
+  const t = T[lang];
+  const dias = diasHasta(c.vencimiento);
+  const venc = new Date(c.vencimiento + "T00:00:00").toLocaleDateString(t.locale);
+  return dias < 0 ? t.waMsgVencido(c.nombre, fmt(c.monto), venc) : t.waMsgProximo(c.nombre, fmt(c.monto), venc);
+}
+function render() {
+  const t = T[lang];
+  const lista = document.getElementById("lista");
+  if (clientes.length === 0) {
+    lista.innerHTML = `<div class="empty">${t.empty}</div>`;
+  } else {
+    const ordenados = [...clientes].sort((a,b) => diasHasta(a.vencimiento) - diasHasta(b.vencimiento));
+    lista.innerHTML = ordenados.map(c => {
+      const dias = diasHasta(c.vencimiento);
+      const e = estado(dias);
+      const tel = toWaNumber(c.telefono);
+      const msg = encodeURIComponent(mensajeWA(c));
+      return `<div class="card">
+        <div class="card-top">
+          <div>
+            <strong>${c.nombre}</strong>
+            <div class="meta">${t.vence}: ${new Date(c.vencimiento+"T00:00:00").toLocaleDateString(t.locale)} · ${t.whatsapp}: +${tel}</div>
+            <span class="badge ${e.cls}">${e.label}</span>
+          </div>
+          <div class="amount">${fmt(c.monto)}</div>
+        </div>
+        <div class="actions">
+          <a class="btn-wa" style="text-decoration:none;display:flex;align-items:center;justify-content:center" href="https://wa.me/${tel}?text=${msg}" target="_blank" rel="noopener">${t.recordar}</a>
+          <button class="btn-del" onclick="borrar('${c.id}')">${t.eliminar}</button>
+        </div>
+      </div>`;
+    }).join("");
+  }
+  document.getElementById("statTotal").textContent = fmt(clientes.reduce((s,c)=>s+Number(c.monto),0));
+  document.getElementById("statVencidos").textContent = clientes.filter(c => diasHasta(c.vencimiento) < 0).length;
+  document.getElementById("statClientes").textContent = clientes.length;
+  renderBanner();
+}
+function borrar(id) {
+  clientes = clientes.filter(c => c.id !== id);
+  save(); render();
+}
+async function exportBackup() {
+  try {
+    const downloads = await window.claude.use("downloads");
+    if (!downloads) { alert(T[lang].backupNoDisp); return; }
+    const data = JSON.stringify(clientes, null, 2);
+    await downloads.save({ filename: "clientes-backup.json", data });
+  } catch (e) { alert(T[lang].backupError); }
+}
+function importBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const datos = JSON.parse(e.target.result);
+      if (!Array.isArray(datos)) throw new Error("formato inválido");
+      const existentes = new Set(clientes.map(c => c.id));
+      const nuevos = datos.filter(c => c.id && !existentes.has(c.id));
+      nuevos.forEach(c => clientes.push(c));
+      save(); render();
+      alert(T[lang].backupOk(nuevos.length));
+    } catch (err) {
+      alert(T[lang].backupFormatoError);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+document.getElementById("form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  if (!esPremium() && clientes.length >= FREE_LIMIT) {
+    alert(T[lang].limiteAlert);
+    return;
+  }
+  clientes.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    nombre: document.getElementById("nombre").value.trim(),
+    telefono: document.getElementById("telefono").value.trim(),
+    monto: document.getElementById("monto").value,
+    vencimiento: document.getElementById("vencimiento").value
+  });
+  save(); render();
+  e.target.reset();
+});
+load(); applyStaticText(); render();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
